@@ -1,13 +1,15 @@
 "use client";
 
+import { StudentInvitation } from "./access-form";
+import { NbaNews } from "./nba-news";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { BookOpen, Check, Clock3, Lightbulb, ListPlus, LockKeyhole, LogOut, RotateCcw } from "lucide-react";
+import { BookOpen, Check, Clock3, Lightbulb, ListPlus, LockKeyhole, LogOut, Newspaper, RotateCcw } from "lucide-react";
 import {
   exercisesFor, focusLabels, starterTopic, suggestTopic,
   type Focus, type HomeView, type RunView, type Topic,
 } from "@/lib/lesson";
 
-type Pane = "home" | "topics" | "add" | "preview" | "practice";
+type Pane = "home" | "topics" | "add" | "preview" | "practice" | "nba";
 type Custom = {
   scene: string; sentence: string; cue: string; answer: string; hint: string;
   alternateScene: string; alternateSentence: string;
@@ -54,7 +56,7 @@ function ErrorNote({ message }: { message: string }) {
   return message ? <p role="alert" className="notice error">{message}</p> : null;
 }
 
-export function Tutor({ signIn, signOut }: { signIn: string | null; signOut: string }) {
+export function Tutor() {
   const [home, setHome] = useState<HomeView | null>(null);
   const [pane, setPane] = useState<Pane>("home");
   const [run, setRun] = useState<RunView>();
@@ -64,12 +66,11 @@ export function Tutor({ signIn, signOut }: { signIn: string | null; signOut: str
   const main = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (signIn) return;
     let active = true;
     api<HomeView>().then(value => { if (active) setHome(value); })
       .catch(reason => { if (active) setError(reason.message); });
     return () => { active = false; };
-  }, [signIn]);
+  }, []);
 
   const topics = home?.topics ?? [starterTopic];
   const topic = topics[0];
@@ -125,10 +126,11 @@ export function Tutor({ signIn, signOut }: { signIn: string | null; signOut: str
         </button>
         {!!home && <nav aria-label="Main navigation">
           <button className={pane === "home" || pane === "practice" ? "active" : ""} onClick={returnHome} aria-current={pane === "home" ? "page" : undefined}>{student ? "Practice" : "Home"}</button>
-          <button className={pane !== "home" && pane !== "practice" ? "active" : ""} onClick={() => navigate("topics")} aria-current={pane === "topics" ? "page" : undefined}>Class topics</button>
+          <button className={pane !== "home" && pane !== "practice" && pane !== "nba" ? "active" : ""} onClick={() => navigate("topics")} aria-current={pane === "topics" ? "page" : undefined}>Class topics</button>
+          <button className={pane === "nba" ? "active" : ""} onClick={() => navigate("nba")} aria-current={pane === "nba" ? "page" : undefined} lang="es">NBA en español</button>
         </nav>}
         <div className="account">
-          {!!home && <><span className="role"><LockKeyhole size={14} /> {student ? "Student" : "Parent"}</span><a href={signOut} target="_top" aria-label="Sign out" title="Sign out" className="icon-button"><LogOut size={18} /></a></>}
+          {!!home && <><span className="role"><LockKeyhole size={14} /> {student ? "Student" : "Parent"}</span><form method="POST" action="/api/access/sign-out"><button type="submit" aria-label="Sign out" title="Sign out" className="icon-button"><LogOut size={18} /></button></form></>}
         </div>
       </div>
     </header>
@@ -139,8 +141,7 @@ export function Tutor({ signIn, signOut }: { signIn: string | null; signOut: str
             <p className="overline hero-overline"><Ball size={16} /> Toronto Raptors practice</p>
             <h1 id="home-title">SPANISH<br /><em>COURTSIDE.</em></h1>
             <p className="hero-description">Practice this week’s Spanish with short basketball drills.</p>
-            {signIn ? <a className="button primary" href={signIn} target="_top">Sign in with ChatGPT</a>
-              : student ? <button className="button primary" disabled={busy} onClick={() => openRun(home?.study?.resume?.id ?? topic.id, Boolean(home?.study?.resume))}>
+            {student ? <button className="button primary" disabled={busy} onClick={() => openRun(home?.study?.resume?.id ?? topic.id, Boolean(home?.study?.resume))}>
                 {busy ? "Opening practice…" : home?.study?.resume ? "Resume practice" : "Start practice"}
               </button>
               : home ? <button className="button primary" onClick={() => navigate("add")}><ListPlus size={19} /> Add a topic</button>
@@ -170,6 +171,12 @@ export function Tutor({ signIn, signOut }: { signIn: string | null; signOut: str
             </div>
           </section>
         </div>
+        {home && <section className="panel news-teaser" lang="es">
+          <span className="panel-icon"><Newspaper size={22} /></span>
+          <div><h2>NBA en español</h2><p>Lee titulares y rumores de la liga. Sigue de cerca a los Toronto Raptors.</p></div>
+          <button type="button" className="button secondary" onClick={() => navigate("nba")}>Ver titulares</button>
+        </section>}
+        {home?.role === "coach" && <StudentInvitation joined={Boolean(home.studentJoined)} />}
       </>}
       {pane === "topics" && <>
         <Heading onBack={returnHome} label="Home">Class topics</Heading>
@@ -197,6 +204,7 @@ export function Tutor({ signIn, signOut }: { signIn: string | null; signOut: str
           <ErrorNote message={error} />
         </div>
       </>}
+      {pane === "nba" && <NbaNews onBack={returnHome} />}
       {pane === "practice" && run && <Practice key={run.id} run={run} onChange={setRun} onExit={returnHome} />}
       <footer className="site-footer"><span><Ball size={16} /> Cancha</span><span>{student ? "Your practice is private to this account." : "Grade 11 Spanish practice"}</span></footer>
     </main>

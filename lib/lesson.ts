@@ -43,6 +43,7 @@ export type RunView = {
 export type HomeView = {
   role: "coach" | "student";
   topics: Topic[];
+  studentJoined?: boolean;
   study?: { review: number; rounds: number; resume: { id: string; title: string } | null };
 };
 

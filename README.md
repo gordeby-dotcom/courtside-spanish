@@ -1,21 +1,13 @@
 # Cancha | Courtside Spanish
 
-Cancha is a Grade 11 Spanish practice tutor built for one parent and one student. It ships with a Toronto basketball drill for affirmative tú and vosotros commands.
+A private Grade 11 Spanish tutor with short Raptors-themed drills, hints, and review across class topics. The **NBA en español** section brings in Spanish headlines from publisher RSS feeds, with a Toronto Raptors filter, publication dates, source links, and vocabulary to help with reading. Rumors are marked separately.
 
-## Accounts and data
+## Development
 
-The Site is private. ChatGPT sign-in handles identity. The hosted `COACH_EMAIL` secret identifies the parent. Any student invited to the Site can access only their own practice data. Both roles can add and preview class topics. Class topics are shared by the Site’s members. Student sessions and review are scoped to the authenticated student ID in D1. The tutor stores the outcome of each response and keeps typed answers out of the practice records.
+Use Node 24. Run `npm ci` and then `npm run dev`. For local testing, set `CANCHA_LOCAL_DATA` to a private scratch directory, `CANCHA_ORIGIN` to the browser’s local origin, and set the two secrets described below. The local file adapter is disabled on Vercel.
 
-Catalog topics use vetted practice prompts and fresh variants. For material outside the catalog, either account can write custom prompts, with an optional alternate sentence for review.
+## Deployment
 
-## Local development
+Deploy as a Next.js project with a dedicated **private** Vercel Blob store. On production, set `CANCHA_ORIGIN` to the site’s canonical HTTPS origin and `CANCHA_SESSION_KEY` to a high-entropy secret. Set `CANCHA_SETUP_HASH` to the SHA-256 hash (hex) of a one-time, random 24-byte base64url setup token. The first parent opens `/join#setup=TOKEN` and chooses a password. The parent dashboard can then issue a seven-day student invitation. Both sign-ins can add a class topic. Practice state is accessible through the student sign-in.
 
-Use Node 22.13 or newer and run `npm ci`. To run as the demo student in the loopback-only preview, set `COACH_EMAIL=parent@example.test` in an ignored `.dev.vars`. Use `COACH_EMAIL=seedy@sites.test` to give the default mock user the parent role.
-
-```sh
-npm run build
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_overconfident_prima.sql
-npm run dev
-```
-
-Apply that migration once to a fresh local database. Open the dev URL and sign in with the development account. Production identity and secrets are managed by Sites. Use a private audience. Register this checkout with its own Site ID before deploying.
+The news section refreshes its cached publisher feeds on demand, with a 15-minute refresh interval. It uses feed headlines and published times rather than generated reports. No API key is needed for the news feeds.
