@@ -73,11 +73,11 @@ export function parseFeed(xml: string, feed: FeedId): NewsHeadline[] {
     if (!title || title.length > 320 || !Number.isFinite(publishedAt) || !url) continue;
     const normalized = normalizeSpanish(title);
     const tags = normalizeSpanish((item.category ?? []).map(text).join(" "));
-    if (/\b(apuestas|cuotas de apuestas|casino)\b/.test(normalized + " " + tags)) continue;
+    if (/\b(apuestas|casino|wnba|toronto tempo)\b/.test(normalized + " " + tags) || url.includes("/previas/")) continue;
     articles.push({
       title, url, publishedAt, source: feeds[feed].source,
       kind: categorize(normalized, tags, url, feed),
-      raptors: feed === "toronto" || /\b(?:toronto|raptors)\b/.test(normalized + " " + tags),
+      raptors: feed === "toronto" || /\braptors\b/.test(normalized + " " + tags),
     });
   }
   return articles;
@@ -114,7 +114,7 @@ const cachedFeed = unstable_cache(async (feed: FeedId) => {
   });
   if (!response.ok) throw new Error("NBA feed response " + response.status);
   return { headlines: parseFeed(await readBounded(response), feed), checkedAt: Date.now() };
-}, ["cancha-nba-publisher-feed-v1"], { revalidate: 900 });
+}, ["cancha-nba-publisher-feed-v2"], { revalidate: 900 });
 
 export function mergeHeadlines(entries: NewsHeadline[], now = Date.now()) {
   const byUrl = new Map<string, NewsHeadline>();
